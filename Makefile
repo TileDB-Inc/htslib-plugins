@@ -100,7 +100,7 @@ endif
 # Override $(PLUGINS) to build or install a different subset of the available
 # plugins.  In particular, hfile_irods_wrapper is not in the default list as
 # it is not needed with recent HTSlib (though it does no particular harm).
-PLUGINS = hfile_cip$(PLUGIN_EXT) hfile_irods$(PLUGIN_EXT) hfile_mmap$(PLUGIN_EXT)
+PLUGINS = hfile_cip$(PLUGIN_EXT) hfile_irods$(PLUGIN_EXT) hfile_mmap$(PLUGIN_EXT) hfile_tiledb_vfs$(PLUGIN_EXT)
 
 plugins: $(PLUGINS)
 
@@ -234,3 +234,26 @@ hfile_irods_wrapper$(PLUGIN_EXT): ALL_LIBS += -ldl
 
 hfile_irods_wrapper$(PLUGIN_EXT): hfile_irods_wrapper.o
 hfile_irods_wrapper.o: hfile_irods_wrapper.c hfile_internal.h
+
+#### TileDB VFS https://tiledb.com ####
+
+# This requires a system installation of TileDB
+# If TileDB is not installed in a system path, adjust the TILEDB_HOME variable
+#TILEDB_HOME = /usr/local
+
+ifdef TILEDB_HOME
+TILEDB_CPPFLAGS = -I$(TILEDB_HOME)/include
+TILEDB_LDFLAGS  = -L$(TILEDB_HOME)/lib -L$(TILEDB_HOME)/lib64
+endif
+
+TILEDB_CPPFLAGS ?=
+TILEDB_LDFLAGS ?=
+
+TILEDB_LIBS = -ltiledb
+
+hfile_tiledb_vfs.o: ALL_CPPFLAGS += $(VERSION_CPPFLAGS) $(TILEDB_CPPFLAGS)
+hfile_tiledb_vfs$(PLUGIN_EXT): ALL_LDFLAGS += $(TILEDB_LDFLAGS)
+hfile_tiledb_vfs$(PLUGIN_EXT): ALL_LIBS += $(TILEDB_LIBS)
+
+hfile_tiledb_vfs$(PLUGIN_EXT): hfile_tiledb_vfs.o
+hfile_tiledb_vfs.o: hfile_tiledb_vfs.c hfile_internal.h
